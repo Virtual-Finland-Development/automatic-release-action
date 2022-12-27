@@ -88,7 +88,15 @@ async function runAction() {
       { name: 'githubToken', fallback: () => process.env.GITHUB_TOKEN },
       { name: 'githubSHA', fallback: () => process.env.GITHUB_SHA },
     ]);
+
+    core.info(JSON.stringify(inputs));
+
     const octokit = github.getOctokit(inputs.githubToken);
+    core.info('BAH');
+
+    core.info(JSON.stringify(octokit));
+    core.info('BAH>ZAR');
+
     core.info(JSON.stringify(octokit.git));
     const repositoryContext = {
       owner: github.context.repo.owner,
