@@ -33,7 +33,7 @@ function generateTagName({ name, environment }) {
   return `${name}-${date}-${environment}`;
 }
 
-async function createNewTagRef(
+async function resolveTagRef(
   octokit,
   repositoryContext,
   tagName,
@@ -48,11 +48,32 @@ async function createNewTagRef(
     type: 'commit',
   });
 
-  return await octokit.git.createRef({
+  let existingRef;
+  try {
+    existingRef = await octokit.git.getRef({
+      ...repositoryContext,
+      ref: tagName,
+    });
+  } catch (error) {
+    if (error.status != 404) {
+      throw error;
+    }
+  }
+
+  const refInfo = {
     ...repositoryContext,
-    ref: `refs/tags/${tagName}`,
-    latestCommitSha,
-  });
+    ref: `tags/${tagName}`,
+    sha: latestCommitSha,
+  };
+
+  if (existingRef) {
+    return await octokit.git.updateRef(refInfo);
+  } else {
+    return await octokit.git.createRef({
+      ...refInfo,
+      ref: `refs/tags/${tagName}`,
+    });
+  }
 }
 
 /**
@@ -68,6 +89,7 @@ async function runAction() {
       { name: 'githubSHA', fallback: () => process.env.GITHUB_SHA },
     ]);
     const octokit = github.getOctokit(inputs.githubToken);
+    core.info(JSON.stringify(octokit));
     const repositoryContext = {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
@@ -75,18 +97,9 @@ async function runAction() {
 
     // Crate a release tag for the latest commit
     const tagName = generateTagName(inputs);
-    // Get already existing tag refs
-    const existingTagRefs = await octokit.git.listMatchingRefs({
-      ...repositoryContext,
-      ref: `tags/${tagName}`,
-    });
+
     // Create new tag ref
-    const newTagRef = await createNewTagRef(
-      octokit,
-      repositoryContext,
-      tagName,
-      inputs.githubSHA,
-    );
+    await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
 
     /*  // Create release
     const release = await octokit.repos.createRelease({
@@ -95,15 +108,6 @@ async function runAction() {
       name: tagName,
       body: `Release for ${tagName}`,
     }); */
-
-    // Update existing tag refs to point to the new tag ref
-    for (const existingTagRef of existingTagRefs.data) {
-      await octokit.git.updateRef({
-        ...repositoryContext,
-        ref: existingTagRef.ref,
-        sha: newTagRef.data.object.sha,
-      });
-    }
   } catch (error) {
     core.setFailed(error.message);
   }

@@ -26,4 +26,4 @@ with:
 
 https://docs.github.com/en/actions/creating-actions
 
-https://github.com/daily-co/
+https://github.com/daily-co/create-tag-action
