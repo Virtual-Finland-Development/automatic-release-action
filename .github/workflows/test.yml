@@ -13,3 +13,4 @@ jobs:
         with:
           name: automatic-release-action
           environment: dev
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
