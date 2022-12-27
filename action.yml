@@ -8,6 +8,12 @@ inputs:
   environment:
     description: 'A stage eg. dev, staging, production..'
     required: true
+  githubToken:
+    description: 'Github action token'
+    required: false
+  githubSHA:
+    description: 'Github commit hash'
+    required: false
 
 runs:
   using: 'node16'
