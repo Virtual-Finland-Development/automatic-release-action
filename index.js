@@ -89,7 +89,7 @@ async function runAction() {
       { name: 'githubSHA', fallback: () => process.env.GITHUB_SHA },
     ]);
     const octokit = github.getOctokit(inputs.githubToken);
-    core.info(JSON.stringify(octokit));
+    core.info(JSON.stringify(octokit.git));
     const repositoryContext = {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
@@ -97,7 +97,7 @@ async function runAction() {
 
     // Crate a release tag for the latest commit
     const tagName = generateTagName(inputs);
-
+    core.info(JSON.stringify(tagName));
     // Create new tag ref
     await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
 
