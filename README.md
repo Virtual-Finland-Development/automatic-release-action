@@ -19,7 +19,7 @@ The GitHub token to use for the action. See [Automatic token authentication](htt
 ## Example usage
 
 ```yaml
-uses: Virtual-Finland/automatic-release-action@v1.0
+uses: Virtual-Finland-Development/automatic-release-action@v1.0
 with:
   name: appName
   environment: dev
