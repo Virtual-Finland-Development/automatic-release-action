@@ -113,12 +113,13 @@ function createRelease(octokit, releasePackage) {
         if (existingRelease) {
             core.info('Updating existing release..');
             yield octokit.rest.repos.updateRelease(Object.assign(Object.assign({}, releasePackage.repositoryContext), { release_id: existingRelease.data.id, tag_name: releasePackage.tagName, name: releaseNotes.data.name, body: releaseNotes.data.body, prerelease: releasePackage.inputs.prerelease }));
+            core.info('Release updated!');
         }
         else {
             core.info('Creating new release..');
             yield octokit.rest.repos.createRelease(Object.assign(Object.assign({}, releasePackage.repositoryContext), { tag_name: releasePackage.tagName, name: releaseNotes.data.name, body: releaseNotes.data.body, prerelease: releasePackage.inputs.prerelease }));
+            core.info('Release created!');
         }
-        core.info('Release created!');
     });
 }
 exports.createRelease = createRelease;
@@ -197,6 +198,7 @@ function runAction() {
                 name: 'prerelease',
                 fallback: false,
                 required: false,
+                format: utils_1.ensureBoolean,
             },
         ]);
         const octokit = github.getOctokit(inputs.githubToken);
@@ -250,8 +252,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.generateTagName = exports.parseGitActionInputs = void 0;
+exports.generateTagName = exports.parseGitActionInputs = exports.ensureBoolean = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+/**
+ *
+ * @param value
+ * @returns
+ */
+function ensureBoolean(value) {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    if (typeof value === 'string') {
+        const compare = value.toLowerCase();
+        return compare === 'true' || compare === '1' || compare === 'yes';
+    }
+    return Boolean(value);
+}
+exports.ensureBoolean = ensureBoolean;
 /**
  * Parses list of input requirements to validated inputs map
  *
@@ -259,11 +277,14 @@ const core = __importStar(__nccwpck_require__(2186));
  * @returns
  */
 function parseGitActionInputs(inputRequirements) {
-    return inputRequirements.reduce((acc, { name, fallback, required }) => {
+    return inputRequirements.reduce((acc, { name, fallback, required, format }) => {
         try {
-            acc[name] =
-                core.getInput(name) ||
-                    (typeof fallback === 'function' ? fallback() : fallback);
+            let value = core.getInput(name) ||
+                (typeof fallback === 'function' ? fallback() : fallback);
+            if (typeof format === 'function') {
+                value = format(value);
+            }
+            acc[name] = value;
             if (!acc[name] && required) {
                 throw 'raise error';
             }
