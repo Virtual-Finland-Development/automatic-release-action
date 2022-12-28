@@ -1,3 +1,5 @@
+// @see: https://octokit.github.io/rest.js/v19#actions
+// @see: https://github.com/actions/toolkit/tree/main/packages/github
 const core = require('@actions/core');
 const github = require('@actions/github');
 
@@ -33,6 +35,14 @@ function generateTagName({ name, environment }) {
   return `${name}-${date}-${environment}`;
 }
 
+/**
+ *
+ * @param {*} octokit
+ * @param {*} repositoryContext
+ * @param {*} tagName
+ * @param {*} latestCommitSha
+ * @returns
+ */
 async function resolveTagRef(
   octokit,
   repositoryContext,
@@ -50,7 +60,7 @@ async function resolveTagRef(
 
   let existingRef;
   try {
-    existingRef = await octokit.git.getRef({
+    existingRef = await octokit.rest.git.getRef({
       ...repositoryContext,
       ref: tagName,
     });
@@ -67,11 +77,40 @@ async function resolveTagRef(
   };
 
   if (existingRef) {
-    return await octokit.git.updateRef(refInfo);
+    return await octokit.rest.git.updateRef(refInfo);
   } else {
-    return await octokit.git.createRef({
+    return await octokit.rest.git.createRef({
       ...refInfo,
-      ref: `refs/tags/${tagName}`,
+      ref: `refs/${refInfo.ref}`,
+    });
+  }
+}
+
+/**
+ *
+ * @param {*} octokit
+ * @param {*} repositoryContext
+ * @param {*} tagName
+ */
+async function resolveRelease(octokit, repositoryContext, tagName) {
+  const existingRelease = await octokit.rest.repos.getReleaseByTag({
+    ...repositoryContext,
+    tag: tagName,
+  });
+  if (existingRelease) {
+    await octokit.rest.repos.updateRelease({
+      ...repositoryContext,
+      release_id: existingRelease.data.id,
+      tag_name: tagName,
+      name: tagName,
+      body: `Release for ${tagName}`,
+    });
+  } else {
+    await octokit.rest.repos.createRelease({
+      ...repositoryContext,
+      tag_name: tagName,
+      name: tagName,
+      body: `Release for ${tagName}`,
     });
   }
 }
@@ -89,33 +128,15 @@ async function runAction() {
       { name: 'githubSHA', fallback: () => process.env.GITHUB_SHA },
     ]);
 
-    core.info(JSON.stringify(inputs));
-
     const octokit = github.getOctokit(inputs.githubToken);
-    core.info('BAH');
-
-    core.info(JSON.stringify(octokit));
-    core.info('BAH>ZAR');
-
-    core.info(JSON.stringify(octokit.git));
     const repositoryContext = {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
     };
 
-    // Crate a release tag for the latest commit
     const tagName = generateTagName(inputs);
-    core.info(JSON.stringify(tagName));
-    // Create new tag ref
     await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
-
-    /*  // Create release
-    const release = await octokit.repos.createRelease({
-      ...repositoryContext,
-      tag_name: tagName,
-      name: tagName,
-      body: `Release for ${tagName}`,
-    }); */
+    await resolveRelease(octokit, repositoryContext, tagName);
   } catch (error) {
     core.setFailed(error.message);
   }
