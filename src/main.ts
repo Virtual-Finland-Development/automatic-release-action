@@ -3,7 +3,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { createRelease, createTag, createTagRef } from './actions';
-import { generateTagName, parseGitActionInputs } from './utils';
+import { ensureBoolean, generateTagName, parseGitActionInputs } from './utils';
 
 /**
  * Main entry point
@@ -31,6 +31,7 @@ async function runAction() {
       name: 'prerelease',
       fallback: false,
       required: false,
+      format: ensureBoolean,
     },
   ]);
 
