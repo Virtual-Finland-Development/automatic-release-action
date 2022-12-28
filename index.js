@@ -35,6 +35,25 @@ function generateTagName({ name, environment }) {
   return `${name}-${date}-${environment}`;
 }
 
+async function resolveTag(
+  octokit,
+  repositoryContext,
+  tagName,
+  latestCommitSha,
+) {
+  try {
+    await octokit.rest.git.createTag({
+      ...repositoryContext,
+      tag: tagName,
+      message: `Tagging ${tagName}`,
+      object: latestCommitSha,
+      type: 'commit',
+    });
+  } catch (error) {
+    /* empty */
+  }
+}
+
 /**
  *
  * @param {*} octokit
@@ -49,15 +68,6 @@ async function resolveTagRef(
   tagName,
   latestCommitSha,
 ) {
-  const tagMessage = `Tagging ${tagName}`;
-  await octokit.rest.git.createTag({
-    ...repositoryContext,
-    tag: tagName,
-    message: tagMessage,
-    object: latestCommitSha,
-    type: 'commit',
-  });
-
   let existingRef;
   try {
     existingRef = await octokit.rest.git.getRef({
@@ -144,6 +154,7 @@ async function runAction() {
 
     const tagName = generateTagName(inputs);
     core.info(`Tagging ${tagName}`);
+    await resolveTag(octokit, repositoryContext, tagName, inputs.githubSHA);
     await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
     core.info(`Creating release for ${tagName}`);
     await resolveRelease(octokit, repositoryContext, tagName);
