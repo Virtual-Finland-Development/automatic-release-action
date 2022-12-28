@@ -128,8 +128,6 @@ async function createRelease(octokit, repositoryContext, tagName) {
     },
   );
 
-  console.log(releaseNotes);
-
   if (existingRelease) {
     await octokit.rest.repos.updateRelease({
       ...repositoryContext,
