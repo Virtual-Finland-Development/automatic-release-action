@@ -1,5 +1,9 @@
 import { expect, test } from '@jest/globals';
-import { ensureBoolean, parseGitActionInputs } from '../src/utils';
+import {
+  ensureBoolean,
+  generateTagName,
+  parseGitActionInputs,
+} from '../src/utils';
 
 test('test conversions', () => {
   expect(ensureBoolean('true')).toBe(true);
@@ -22,4 +26,13 @@ test('test input parsers', () => {
 
   expect(inputs.name).toBe('name');
   expect(inputs.prerelease).toBe(true);
+});
+
+test('test tag naming', () => {
+  expect(generateTagName({ name: 'exampleApp', environment: 'dev' })).toMatch(
+    new RegExp('exampleApp-\\d{4}-\\d{2}-\\d{2}-dev'),
+  );
+  expect(generateTagName({ name: 'exampleApp' })).toMatch(
+    new RegExp('exampleApp-\\d{4}-\\d{2}-\\d{2}'),
+  );
 });

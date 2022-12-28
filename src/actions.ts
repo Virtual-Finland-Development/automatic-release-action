@@ -104,6 +104,7 @@ export async function createRelease(
       body: releaseNotes.data.body,
       prerelease: releasePackage.inputs.prerelease,
     });
+    core.info('Release updated!');
   } else {
     core.info('Creating new release..');
     await octokit.rest.repos.createRelease({
@@ -113,7 +114,6 @@ export async function createRelease(
       body: releaseNotes.data.body,
       prerelease: releasePackage.inputs.prerelease,
     });
+    core.info('Release created!');
   }
-
-  core.info('Release created!');
 }

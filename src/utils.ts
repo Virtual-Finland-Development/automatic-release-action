@@ -67,7 +67,7 @@ export function generateTagName({
   environment,
 }: {
   name: string;
-  environment: string;
+  environment?: string;
 }) {
   const date = new Date().toISOString().split('T')[0];
   return [name, date, environment].filter(Boolean).join('-');
