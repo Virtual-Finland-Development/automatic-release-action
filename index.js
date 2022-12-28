@@ -128,20 +128,22 @@ async function createRelease(octokit, repositoryContext, tagName) {
     },
   );
 
+  console.log(releaseNotes);
+
   if (existingRelease) {
     await octokit.rest.repos.updateRelease({
       ...repositoryContext,
       release_id: existingRelease.data.id,
       tag_name: tagName,
-      name: releaseNotes.name,
-      body: releaseNotes.body,
+      name: releaseNotes.data.name,
+      body: releaseNotes.data.body,
     });
   } else {
     await octokit.rest.repos.createRelease({
       ...repositoryContext,
       tag_name: tagName,
-      name: releaseNotes.name,
-      body: releaseNotes.body,
+      name: releaseNotes.data.name,
+      body: releaseNotes.data.body,
     });
   }
 }
