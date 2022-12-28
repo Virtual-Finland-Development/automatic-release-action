@@ -10,12 +10,12 @@ const github = require('@actions/github');
  * @returns
  */
 function parseGitActionInputs(inputRequirements) {
-  return inputRequirements.reduce((acc, { name, fallback }) => {
+  return inputRequirements.reduce((acc, { name, fallback, required }) => {
     try {
       acc[name] =
         core.getInput(name) ||
         (typeof fallback === 'function' ? fallback() : fallback);
-      if (!acc[name]) {
+      if (!acc[name] && required) {
         throw 'raise error';
       }
     } catch (error) {
@@ -150,35 +150,42 @@ async function createRelease(octokit, repositoryContext, tagName) {
  * Main entry point
  */
 async function runAction() {
-  try {
-    // Prep inputs, octokit & repository context
-    const inputs = parseGitActionInputs([
-      {
-        name: 'name',
-        fallback: () => process.env.GITHUB_REPOSITORY.split('/')[1],
-      },
-      { name: 'environment', fallback: '' },
-      { name: 'githubToken', fallback: () => process.env.GITHUB_TOKEN },
-      { name: 'githubSHA', fallback: () => process.env.GITHUB_SHA },
-    ]);
+  // Prep inputs, octokit & repository context
+  const inputs = parseGitActionInputs([
+    {
+      name: 'name',
+      fallback: () => process.env.GITHUB_REPOSITORY.split('/')[1],
+      required: true,
+    },
+    { name: 'environment', fallback: '', required: false },
+    {
+      name: 'githubToken',
+      fallback: process.env.GITHUB_TOKEN,
+      required: true,
+    },
+    {
+      name: 'githubSHA',
+      fallback: process.env.GITHUB_SHA,
+      required: true,
+    },
+  ]);
 
-    const octokit = github.getOctokit(inputs.githubToken);
-    const repositoryContext = {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-    };
+  const octokit = github.getOctokit(inputs.githubToken);
+  const repositoryContext = {
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+  };
 
-    const tagName = generateTagName(inputs);
-    core.info(`Tagging ${tagName}`);
-    await createTag(octokit, repositoryContext, tagName, inputs.githubSHA);
-    core.info(`Creating a reference..`);
-    await createTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
-    core.info(`Creating a release..`);
-    await createRelease(octokit, repositoryContext, tagName);
-    core.info(`Release created.`);
-  } catch (error) {
-    core.setFailed(error.message);
-  }
+  const tagName = generateTagName(inputs);
+  core.info(`Tagging ${tagName}`);
+  await createTag(octokit, repositoryContext, tagName, inputs.githubSHA);
+  core.info(`Creating a reference..`);
+  await createTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
+  core.info(`Creating a release..`);
+  await createRelease(octokit, repositoryContext, tagName);
+  core.info(`Release created.`);
 }
 
-runAction();
+runAction().catch((error) => {
+  core.setFailed(error.message);
+});
