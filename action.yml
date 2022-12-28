@@ -4,10 +4,10 @@ description: 'Tagging with a daily versions preference'
 inputs:
   name: # id of input
     description: 'App name'
-    required: true
+    required: false
   environment:
     description: 'A stage eg. dev, staging, production..'
-    required: true
+    required: false
   githubToken:
     description: 'Github action token'
     required: false

@@ -1,6 +1,6 @@
 # automatic-release-action
 
-Creates temporal releases with github actions
+Create temporal releases with github actions
 
 ## Inputs
 
