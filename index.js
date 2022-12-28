@@ -87,9 +87,11 @@ async function resolveTagRef(
   };
 
   if (existingRef) {
-    return await octokit.rest.git.updateRef(refInfo);
+    core.info(`Updating reference of ${tagName}`);
+    await octokit.rest.git.updateRef(refInfo);
   } else {
-    return await octokit.rest.git.createRef({
+    core.info(`Creating tag reference of ${tagName}`);
+    await octokit.rest.git.createRef({
       ...refInfo,
       ref: `refs/${refInfo.ref}`,
     });
@@ -155,8 +157,9 @@ async function runAction() {
     const tagName = generateTagName(inputs);
     core.info(`Tagging ${tagName}`);
     await resolveTag(octokit, repositoryContext, tagName, inputs.githubSHA);
+    core.info(`Referencing ${tagName}`);
     await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
-    core.info(`Creating release for ${tagName}`);
+    core.info(`Creating a release for ${tagName}`);
     await resolveRelease(octokit, repositoryContext, tagName);
   } catch (error) {
     core.setFailed(error.message);
