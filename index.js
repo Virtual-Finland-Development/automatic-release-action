@@ -117,20 +117,31 @@ async function createRelease(octokit, repositoryContext, tagName) {
     }
   }
 
+  core.info(`Fetching release notes..`);
+  const { owner, repo } = repositoryContext;
+  const releaseNotes = await octokit.request(
+    `POST /repos/${owner}/${repo}/releases/generate-notes`,
+    {
+      owner: owner,
+      repo: repo,
+      tag_name: tagName,
+    },
+  );
+
   if (existingRelease) {
     await octokit.rest.repos.updateRelease({
       ...repositoryContext,
       release_id: existingRelease.data.id,
       tag_name: tagName,
-      name: tagName,
-      body: `Release for ${tagName}`,
+      name: releaseNotes.name,
+      body: releaseNotes.body,
     });
   } else {
     await octokit.rest.repos.createRelease({
       ...repositoryContext,
       tag_name: tagName,
-      name: tagName,
-      body: `Release for ${tagName}`,
+      name: releaseNotes.name,
+      body: releaseNotes.body,
     });
   }
 }
@@ -161,6 +172,7 @@ async function runAction() {
     await createTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
     core.info(`Creating a release..`);
     await createRelease(octokit, repositoryContext, tagName);
+    core.info(`Release created.`);
   } catch (error) {
     core.setFailed(error.message);
   }
