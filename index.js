@@ -35,12 +35,14 @@ function generateTagName({ name, environment }) {
   return `${name}-${date}-${environment}`;
 }
 
-async function resolveTag(
-  octokit,
-  repositoryContext,
-  tagName,
-  latestCommitSha,
-) {
+/**
+ *
+ * @param {*} octokit
+ * @param {*} repositoryContext
+ * @param {*} tagName
+ * @param {*} latestCommitSha
+ */
+async function createTag(octokit, repositoryContext, tagName, latestCommitSha) {
   try {
     await octokit.rest.git.createTag({
       ...repositoryContext,
@@ -62,7 +64,7 @@ async function resolveTag(
  * @param {*} latestCommitSha
  * @returns
  */
-async function resolveTagRef(
+async function createTagRef(
   octokit,
   repositoryContext,
   tagName,
@@ -102,7 +104,7 @@ async function resolveTagRef(
  * @param {*} repositoryContext
  * @param {*} tagName
  */
-async function resolveRelease(octokit, repositoryContext, tagName) {
+async function createRelease(octokit, repositoryContext, tagName) {
   let existingRelease;
   try {
     existingRelease = await octokit.rest.repos.getReleaseByTag({
@@ -154,11 +156,11 @@ async function runAction() {
 
     const tagName = generateTagName(inputs);
     core.info(`Tagging ${tagName}`);
-    await resolveTag(octokit, repositoryContext, tagName, inputs.githubSHA);
+    await createTag(octokit, repositoryContext, tagName, inputs.githubSHA);
     core.info(`Creating a reference..`);
-    await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
+    await createTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
     core.info(`Creating a release..`);
-    await resolveRelease(octokit, repositoryContext, tagName);
+    await createRelease(octokit, repositoryContext, tagName);
   } catch (error) {
     core.setFailed(error.message);
   }
