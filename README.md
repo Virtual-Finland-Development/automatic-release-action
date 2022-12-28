@@ -1,6 +1,6 @@
 # automatic-release-action
 
-Create temporal releases with github actions
+Create temporal releases with github actions. This action will create a release with input name and the current date as the tag name. If the release already exists, it will be updated.
 
 ## Inputs
 
@@ -29,6 +29,8 @@ with:
   environment: dev
   githubToken: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+-> This will create a release with the name like `appName-2022-12-28-dev`.
 
 ## References
 
