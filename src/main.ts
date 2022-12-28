@@ -12,7 +12,12 @@ import * as github from '@actions/github';
 function parseGitActionInputs(
   inputRequirements: Array<{
     name: keyof ReleasePackage['inputs'];
-    fallback: InputFallbackValue | (() => InputFallbackValue);
+    fallback:
+      | ReleasePackage['inputs'][keyof ReleasePackage['inputs']]
+      | undefined
+      | (() =>
+          | ReleasePackage['inputs'][keyof ReleasePackage['inputs']]
+          | undefined);
     required: boolean;
   }>,
 ): ReleasePackage['inputs'] {

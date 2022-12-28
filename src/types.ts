@@ -1,5 +1,3 @@
-type InputFallbackValue = string | number | boolean | undefined;
-
 interface ReleasePackage {
   tagName: string;
   inputs: {
