@@ -1,15 +1,21 @@
 // @see: https://octokit.github.io/rest.js/v19#actions
 // @see: https://github.com/actions/toolkit/tree/main/packages/github
-const core = require('@actions/core');
-const github = require('@actions/github');
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 
 /**
  * Parses list of input requirements to validated inputs map
  *
- * @param {*} inputRequirements
+ * @param inputRequirements
  * @returns
  */
-function parseGitActionInputs(inputRequirements) {
+function parseGitActionInputs(
+  inputRequirements: Array<{
+    name: keyof ReleasePackage['inputs'];
+    fallback: InputFallbackValue | (() => InputFallbackValue);
+    required: boolean;
+  }>,
+): ReleasePackage['inputs'] {
   return inputRequirements.reduce((acc, { name, fallback, required }) => {
     try {
       acc[name] =
@@ -22,7 +28,7 @@ function parseGitActionInputs(inputRequirements) {
       throw new Error(`Input required and not supplied: ${name}`);
     }
     return acc;
-  }, {});
+  }, {} as any);
 }
 
 /**
@@ -30,7 +36,13 @@ function parseGitActionInputs(inputRequirements) {
  * @param inputs
  * @returns eg. exampleApp-2022-12-31-dev
  */
-function generateTagName({ name, environment }) {
+function generateTagName({
+  name,
+  environment,
+}: {
+  name: string;
+  environment: string;
+}) {
   const date = new Date().toISOString().split('T')[0];
   return [name, date, environment].filter(Boolean).join('-');
 }
@@ -42,13 +54,13 @@ function generateTagName({ name, environment }) {
  * @param {*} tagName
  * @param {*} latestCommitSha
  */
-async function createTag(octokit, repositoryContext, tagName, latestCommitSha) {
+async function createTag(octokit: any, releasePackage: ReleasePackage) {
   try {
     await octokit.rest.git.createTag({
-      ...repositoryContext,
-      tag: tagName,
-      message: `Tagging ${tagName}`,
-      object: latestCommitSha,
+      ...releasePackage.repositoryContext,
+      tag: releasePackage.tagName,
+      message: `Tagging ${releasePackage.tagName}`,
+      object: releasePackage.inputs.githubSHA,
       type: 'commit',
     });
   } catch (error) {
@@ -58,34 +70,26 @@ async function createTag(octokit, repositoryContext, tagName, latestCommitSha) {
 
 /**
  *
- * @param {*} octokit
- * @param {*} repositoryContext
- * @param {*} tagName
- * @param {*} latestCommitSha
- * @returns
+ * @param octokit
+ * @param releasePackage
  */
-async function createTagRef(
-  octokit,
-  repositoryContext,
-  tagName,
-  latestCommitSha,
-) {
+async function createTagRef(octokit: any, releasePackage: ReleasePackage) {
   let existingRef;
   try {
     existingRef = await octokit.rest.git.getRef({
-      ...repositoryContext,
-      ref: `tags/${tagName}`,
+      ...releasePackage.repositoryContext,
+      ref: `tags/${releasePackage.tagName}`,
     });
-  } catch (error) {
-    if (error.status != 404) {
+  } catch (error: any) {
+    if (typeof error.status !== 'number' || error.status !== 404) {
       throw error;
     }
   }
 
   const refInfo = {
-    ...repositoryContext,
-    ref: `tags/${tagName}`,
-    sha: latestCommitSha,
+    ...releasePackage.repositoryContext,
+    ref: `tags/${releasePackage.tagName}`,
+    sha: releasePackage.inputs.githubSHA,
   };
 
   if (existingRef) {
@@ -93,55 +97,56 @@ async function createTagRef(
   } else {
     await octokit.rest.git.createRef({
       ...refInfo,
-      ref: `refs/tags/${tagName}`,
+      ref: `refs/tags/${releasePackage.tagName}`,
     });
   }
 }
 
 /**
  *
- * @param {*} octokit
- * @param {*} repositoryContext
- * @param {*} tagName
+ * @param octokit
+ * @param releasePackage
  */
-async function createRelease(octokit, repositoryContext, tagName) {
+async function createRelease(octokit: any, releasePackage: ReleasePackage) {
   let existingRelease;
   try {
     existingRelease = await octokit.rest.repos.getReleaseByTag({
-      ...repositoryContext,
-      tag: tagName,
+      ...releasePackage.repositoryContext,
+      tag: releasePackage.tagName,
     });
-  } catch (error) {
-    if (error.status != 404) {
+  } catch (error: any) {
+    if (typeof error.status !== 'number' || error.status !== 404) {
       throw error;
     }
   }
 
   core.info(`Fetching release notes..`);
-  const { owner, repo } = repositoryContext;
+  const { owner, repo } = releasePackage.repositoryContext;
   const releaseNotes = await octokit.request(
     `POST /repos/${owner}/${repo}/releases/generate-notes`,
     {
       owner: owner,
       repo: repo,
-      tag_name: tagName,
+      tag_name: releasePackage.tagName,
     },
   );
 
   if (existingRelease) {
     await octokit.rest.repos.updateRelease({
-      ...repositoryContext,
+      ...releasePackage.repositoryContext,
       release_id: existingRelease.data.id,
-      tag_name: tagName,
+      tag_name: releasePackage.tagName,
       name: releaseNotes.data.name,
       body: releaseNotes.data.body,
+      prerelease: releasePackage.inputs.prerelease,
     });
   } else {
     await octokit.rest.repos.createRelease({
-      ...repositoryContext,
-      tag_name: tagName,
+      ...releasePackage.repositoryContext,
+      tag_name: releasePackage.tagName,
       name: releaseNotes.data.name,
       body: releaseNotes.data.body,
+      prerelease: releasePackage.inputs.prerelease,
     });
   }
 }
@@ -154,7 +159,7 @@ async function runAction() {
   const inputs = parseGitActionInputs([
     {
       name: 'name',
-      fallback: () => process.env.GITHUB_REPOSITORY.split('/')[1],
+      fallback: () => (process.env.GITHUB_REPOSITORY || '').split('/')[1],
       required: true,
     },
     { name: 'environment', fallback: '', required: false },
@@ -168,21 +173,29 @@ async function runAction() {
       fallback: process.env.GITHUB_SHA,
       required: true,
     },
+    {
+      name: 'prerelease',
+      fallback: false,
+      required: false,
+    },
   ]);
 
   const octokit = github.getOctokit(inputs.githubToken);
-  const repositoryContext = {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+  const releasePackage: ReleasePackage = {
+    tagName: generateTagName(inputs),
+    inputs: inputs,
+    repositoryContext: {
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+    },
   };
 
-  const tagName = generateTagName(inputs);
-  core.info(`Tagging ${tagName}`);
-  await createTag(octokit, repositoryContext, tagName, inputs.githubSHA);
+  core.info(`Tagging ${releasePackage.tagName}`);
+  await createTag(octokit, releasePackage);
   core.info(`Creating a reference..`);
-  await createTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
+  await createTagRef(octokit, releasePackage);
   core.info(`Creating a release..`);
-  await createRelease(octokit, repositoryContext, tagName);
+  await createRelease(octokit, releasePackage);
   core.info(`Release created.`);
 }
 
