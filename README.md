@@ -18,7 +18,7 @@ Runtime stage / environment, e.g. dev, staging, prod. If not set, no environment
 
 ### `prerelease`
 
-Whether to identify the release as prerelease. Defaults to false. see [Create a release](https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#create-a-release) for more information.
+Whether to identify the release as prerelease. Defaults to false. See [Create a release](https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#create-a-release) for more information.
 
 ## Example usage
 
