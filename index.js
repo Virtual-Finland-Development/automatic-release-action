@@ -32,7 +32,7 @@ function parseGitActionInputs(inputRequirements) {
  */
 function generateTagName({ name, environment }) {
   const date = new Date().toISOString().split('T')[0];
-  return `${name}-${date}-${environment}`;
+  return [name, date, environment].filter(Boolean).join('-');
 }
 
 /**
@@ -153,8 +153,11 @@ async function runAction() {
   try {
     // Prep inputs, octokit & repository context
     const inputs = parseGitActionInputs([
-      { name: 'name' },
-      { name: 'environment' },
+      {
+        name: 'name',
+        fallback: () => process.env.GITHUB_REPOSITORY.split('/')[1],
+      },
+      { name: 'environment', fallback: '' },
       { name: 'githubToken', fallback: () => process.env.GITHUB_TOKEN },
       { name: 'githubSHA', fallback: () => process.env.GITHUB_SHA },
     ]);

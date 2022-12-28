@@ -1,29 +1,33 @@
 # automatic-release-action
 
-Creates releases with github actions
+Creates temporal releases with github actions
 
 ## Inputs
 
-### `who-to-greet`
+### `name`
 
-**Required** The name of the person to greet. Default `"World"`.
+Name of the app. Defaults to repository name.
 
-## Outputs
+### `environment`
 
-### `time`
+Runtime stage / environment, e.g. dev, staging, prod. If not set, no environment will be appended to the tag.
 
-The time we greeted you.
+### `githubToken`
+
+The GitHub token to use for the action. See [Automatic token authentication](https://docs.github.com/en/actions/security-guides/automatic-token-authentication) for more information.
 
 ## Example usage
 
 ```yaml
 uses: Virtual-Finland/automatic-release-action@v1.0
 with:
-  who-to-greet: 'Mona the Octocat'
+  name: appName
+  environment: dev
+  githubToken: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## References
 
-https://docs.github.com/en/actions/creating-actions
+- [Github Actions](https://docs.github.com/en/actions/creating-actions)
 
-https://github.com/daily-co/create-tag-action
+- [github.com/daily-co/create-tag-action](https://github.com/daily-co/create-tag-action)
