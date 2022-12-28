@@ -50,7 +50,7 @@ async function resolveTagRef(
   latestCommitSha,
 ) {
   const tagMessage = `Tagging ${tagName}`;
-  await octokit.git.createTag({
+  await octokit.rest.git.createTag({
     ...repositoryContext,
     tag: tagName,
     message: tagMessage,
