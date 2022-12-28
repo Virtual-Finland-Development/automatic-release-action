@@ -35,3 +35,5 @@ with:
 - [Github Actions](https://docs.github.com/en/actions/creating-actions)
 
 - [github.com/daily-co/create-tag-action](https://github.com/daily-co/create-tag-action)
+
+- [github.com/actions/typescript-action](https://github.com/actions/typescript-action)
