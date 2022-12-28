@@ -93,10 +93,18 @@ async function resolveTagRef(
  * @param {*} tagName
  */
 async function resolveRelease(octokit, repositoryContext, tagName) {
-  const existingRelease = await octokit.rest.repos.getReleaseByTag({
-    ...repositoryContext,
-    tag: tagName,
-  });
+  let existingRelease;
+  try {
+    existingRelease = await octokit.rest.repos.getReleaseByTag({
+      ...repositoryContext,
+      tag: tagName,
+    });
+  } catch (error) {
+    if (error.status != 404) {
+      throw error;
+    }
+  }
+
   if (existingRelease) {
     await octokit.rest.repos.updateRelease({
       ...repositoryContext,
@@ -135,7 +143,9 @@ async function runAction() {
     };
 
     const tagName = generateTagName(inputs);
+    core.info(`Tagging ${tagName}`);
     await resolveTagRef(octokit, repositoryContext, tagName, inputs.githubSHA);
+    core.info(`Creating release for ${tagName}`);
     await resolveRelease(octokit, repositoryContext, tagName);
   } catch (error) {
     core.setFailed(error.message);
