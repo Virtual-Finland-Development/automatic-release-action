@@ -22,10 +22,16 @@ test('test input parsers', () => {
       fallback: 'true',
       format: ensureBoolean,
     },
+    {
+      name: 'disabled',
+      fallback: ' true',
+      format: ensureBoolean,
+    },
   ]);
 
   expect(inputs.name).toBe('name');
   expect(inputs.prerelease).toBe(true);
+  expect(inputs.disabled).toBe(true);
 });
 
 test('test tag naming', () => {

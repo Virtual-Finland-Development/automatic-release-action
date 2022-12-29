@@ -41,7 +41,6 @@ async function runAction() {
     },
   ]);
 
-  core.info('Debug: ' + JSON.stringify(inputs));
   if (inputs.disabled) {
     core.info('Action disabled, skipping...');
     return;

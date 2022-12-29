@@ -10,7 +10,7 @@ export function ensureBoolean(value: any): boolean {
     return value;
   }
   if (typeof value === 'string') {
-    const compare = value.toLowerCase();
+    const compare = value.toLowerCase().trim();
     return (
       compare === 'true' ||
       compare === '1' ||
