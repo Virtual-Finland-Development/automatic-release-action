@@ -200,7 +200,17 @@ function runAction() {
                 required: false,
                 format: utils_1.ensureBoolean,
             },
+            {
+                name: 'disabled',
+                fallback: false,
+                required: false,
+                format: utils_1.ensureBoolean,
+            },
         ]);
+        if (inputs.disabled) {
+            core.info('Action disabled, skipping...');
+            return;
+        }
         const octokit = github.getOctokit(inputs.githubToken);
         const releasePackage = {
             tagName: (0, utils_1.generateTagName)(inputs),
@@ -264,8 +274,11 @@ function ensureBoolean(value) {
         return value;
     }
     if (typeof value === 'string') {
-        const compare = value.toLowerCase();
-        return compare === 'true' || compare === '1' || compare === 'yes';
+        const compare = value.toLowerCase().trim();
+        return (compare === 'true' ||
+            compare === '1' ||
+            compare === 'yes' ||
+            compare === 'y');
     }
     return Boolean(value);
 }
