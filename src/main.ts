@@ -33,7 +33,18 @@ async function runAction() {
       required: false,
       format: ensureBoolean,
     },
+    {
+      name: 'disabled',
+      fallback: false,
+      required: false,
+      format: ensureBoolean,
+    },
   ]);
+
+  if (inputs.disabled) {
+    core.info('Action disabled, skipping...');
+    return;
+  }
 
   const octokit = github.getOctokit(inputs.githubToken);
   const releasePackage: ReleasePackage = {

@@ -6,6 +6,7 @@ interface ReleasePackage {
     githubToken: string;
     githubSHA: string;
     prerelease: boolean;
+    disabled: boolean;
   };
   repositoryContext: {
     owner: string;

@@ -20,6 +20,10 @@ Runtime stage / environment, e.g. dev, staging, prod. If not set, no environment
 
 A booleanish flag to signal whether to identify the release as a prerelease. Defaults to false. See [Create a release](https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#create-a-release) for more information.
 
+### `disabled`
+
+A booleanish flag to signal whether to skip the release action. Defaults to false. Useful for conditional releases.
+
 ## Example usage
 
 ```yaml

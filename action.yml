@@ -11,6 +11,9 @@ inputs:
   prerelease:
     description: 'Flag as pre-release. Defaults to false.'
     required: false
+  disabled:
+    description: 'Enable or disable the action. Defaults to false.'
+    required: false
   githubToken:
     description: 'Github action token'
     required: false
