@@ -11,7 +11,12 @@ export function ensureBoolean(value: any): boolean {
   }
   if (typeof value === 'string') {
     const compare = value.toLowerCase();
-    return compare === 'true' || compare === '1' || compare === 'yes';
+    return (
+      compare === 'true' ||
+      compare === '1' ||
+      compare === 'yes' ||
+      compare === 'y'
+    );
   }
   return Boolean(value);
 }
